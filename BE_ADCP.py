@@ -1,3 +1,4 @@
+from ast import IsNot
 from traceback import print_tb
 import numpy as np
 import scipy.io as sci
@@ -6,6 +7,7 @@ import pandas as pd
 import datetime
 from scipy.linalg import lstsq
 import matplotlib.dates as mdates
+import math
 
 
 # 1)
@@ -154,7 +156,7 @@ ax.xaxis.set_major_formatter(date_format)
 fig.autofmt_xdate()
 plt.title('Vitesse NORD')
 
-plt.show()
+
 
 
 fig = plt.figure()
@@ -188,9 +190,38 @@ fig.autofmt_xdate()
 plt.colorbar()
 plt.title('Backscatter A3')
 
-plt.show()
+# plt.show()
+
+##############################
+# Question 4 
+
+table_alpha = pd.read_csv('alpha_w.txt',names=['depth','temp','salinity','alpha_w'],delim_whitespace=True)
+Temperature = awac['awac'][0][0][4].astype(float)[mask_tps_data[0]:mask_tps_data[-1]+1,:]
+salinty = 30
+masked_salinity = table_alpha[(table_alpha['salinity']==30)].index
+# print(masked_salinity)
+table_alpha['salinity_masked'] = table_alpha.iloc[masked_salinity][['salinity']]
+table_alpha['temperature_masked'] = table_alpha.iloc[masked_salinity][['temp']]
+
+temp_filtred = []
+for i in range(len(table_alpha['temperature_masked'])):
+    if not np.isnan(table_alpha['temperature_masked'][i]):
+        temp_filtred.append(table_alpha['temperature_masked'][i])
+        
 
 
-# print(awac_data.head())
-# awac['date']=pd.to_datetime(awac)
-# mask_air_data = awac[(awac['date'] < pd.Timestamp(2018,12,30))].index
+
+# #Tableau des alpha en fonction des temps de Temperature aux bonnes dates
+# alpha_res_table = []
+# for i in range(len(temp_filtred)):
+#     for elem in Temperature:
+#         if math.isclose(elem,temp_filtred[i],abs_tol=0.25):
+#             alpha_res_table.append(table_alpha['alpha_w'][i])
+
+# print(Temperature.shape,len(alpha_res_table))
+        
+
+
+# print(np.round(Temperature,1))
+# masked_temperature = table_alpha[(table_alpha['temp']==30)].index
+# print(math.isclose(10.85,10.5,abs_tol=0.25))
