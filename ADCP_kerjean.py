@@ -408,7 +408,6 @@ if __name__ == '__main__':
     PGeo = 10 * np.log10(V)
     BI = np.ones((TL.shape))
     BI = RL - SL + 2*TL - PGeo
-    print(BI)
     
 
     plt.figure(8)

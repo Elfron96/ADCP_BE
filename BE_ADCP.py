@@ -343,8 +343,8 @@ alpha = 25*np.pi/180 # Beam angle/vertical [rad]
 ouv = 0.99  # ouverture angulaire du faisceau [rad]
 phi = ouv * np.pi/180 # ouverture angulaire du faisceau [rad]
 PSI = np.pi * (phi/2)**2 # Solid Angle
-r =  cell.T / np.cos(alpha)
-R = np.sum(r)
+R =  cell.T / np.cos(alpha)
+
 V = PSI * R**2 * 0.5 * WS # Volume
 R0 = 1.08
 z = R/R0
@@ -352,13 +352,16 @@ psi = ( 1 + 1.35 * z + (( 2.5 * z )**3.2)) / ( 1.35 * z + ((2.5 * z)**3.2))
 psi = round(np.mean(psi))
 
 AW = np.array(alpha_w)
+plt.figure()
+plt.imshow(AW)
+plt.show()
 ranges_aw=np.ones((AW.shape))
 ranges_aw=ranges_aw*0.5
 ranges_aw[:,0]=R0
 AW=AW*ranges_aw
 for i in range(AW.shape[1]):
     AW[:,i]+=AW[:,i-1]
-
+print(AW.shape)
 #### Resolution equation sonar ####
 
 TL = np.ones(AW.shape)
