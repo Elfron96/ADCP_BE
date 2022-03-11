@@ -49,8 +49,8 @@ def masquage_data(pressure, time, a1, a2, a3, ve, vn):
 
     ### définition des données utiles
 
-    mask_time_down = time > pd.Timestamp(2018,4,13,0,19,19)
-    mask_time_up = pd.Timestamp(2018, 4, 28, 23, 49, 19) > time
+    mask_time_down = time > pd.Timestamp(2018,12,15,0,19,19)
+    mask_time_up = pd.Timestamp(2018, 12, 30, 23, 49, 19) > time
 
 
     mask_tot = (mask_time_up * mask_time_down)
@@ -267,14 +267,14 @@ if __name__ == '__main__':
     res, MEScalib, NTUcalib, calibration_NTU, A, B = calibrate(NTU, MES)
 
     date_bottom = time_definition(time_bottom)
-    mask_time_down = date_bottom > pd.Timestamp(2018,4,13,0,19,19)
-    mask_time_up = pd.Timestamp(2018, 4, 28, 23, 49, 19) > date_bottom
+    mask_time_down = date_bottom > pd.Timestamp(2018,12,15,0,19,19)
+    mask_time_up = pd.Timestamp(2018,12,30,0,19,19) > date_bottom
     mask_tot_bottom = (mask_time_up * mask_time_down)
     time_final_bottom = date_bottom[mask_tot_bottom].reshape(-1,1)
 
     date_surface = time_definition(time_surface)
-    mask_time_down = date_surface > pd.Timestamp(2018,4,13,0,19,19)
-    mask_time_up = pd.Timestamp(2018, 4, 28, 23, 49, 19) > date_surface
+    mask_time_down = date_surface > pd.Timestamp(2018,12,15,0,19,19)
+    mask_time_up = pd.Timestamp(2018,12,30,0,19,19) > date_surface
     mask_tot_surface = (mask_time_up * mask_time_down)
     time_final_surface = date_surface[mask_tot_surface].reshape(-1,1)
 
@@ -315,7 +315,7 @@ if __name__ == '__main__':
 #### Question 3 ####
 
     plt.figure(4)
-    plt.pcolormesh(ve_utile.T, cmap='jet')
+    plt.pcolormesh(ve_utile.T, cmap='rainbow')
     plt.title("Vitesse par cellule selon l'est dans la colonne d'eau")
     plt.xlabel('Date')
     plt.ylabel('Hauteur (m)')
@@ -323,14 +323,14 @@ if __name__ == '__main__':
 
 
     plt.figure(5)
-    plt.pcolormesh(vn_utile.T, cmap='jet')
+    plt.pcolormesh(vn_utile.T, cmap='rainbow')
     plt.title("Vitesse par cellule selon le nord dans la colonne d'eau")
     plt.xlabel('Date')
     plt.ylabel('Hauteur (m)')
     plt.colorbar()
 
     plt.figure(6)
-    plt.pcolormesh(cell, cmap='jet')
+    plt.pcolormesh(cell, cmap='rainbow')
     plt.title("Cellule dans la colonne d'eau")
     plt.xlabel('Date')
     plt.ylabel('Hauteur (m)')
@@ -338,7 +338,7 @@ if __name__ == '__main__':
     # plt.show()
 
     plt.figure(7)
-    plt.pcolormesh(a1_utile.T, cmap='jet')
+    plt.pcolormesh(a1_utile.T, cmap='rainbow')
     plt.title("Echo rétrodiffusé brute dans la colonne d'eau")
     plt.xlabel('Date')
     plt.ylabel('Hauteur (m)')
@@ -408,12 +408,18 @@ if __name__ == '__main__':
     PGeo = 10 * np.log10(V)
     BI = np.ones((TL.shape))
     BI = RL - SL + 2*TL - PGeo
-    
 
-    plt.figure(8)
-    plt.pcolormesh(BI.T, cmap='jet')
-    plt.title("Rétrodiffusion acoustique corrigée des atténuations dans la colonne d'eau")
-    plt.xlabel('Date')
+    fig=plt.figure()
+    ax = fig.add_subplot(111)
+    ax.set_xlabel('Temps')
+    # plt.pcolormesh(BI.T, cmap='rainbow')
+    plt.imshow(BI.T,origin="lower",extent=[mdates.date2num(pd.Timestamp(2018,12,15)),mdates.date2num(pd.Timestamp(2018,12,30)),0,40],aspect='auto',cmap='rainbow')
+    ax.xaxis_date()
+    date_format = mdates.DateFormatter('%D:%H:%M')
+    ax.xaxis.set_major_formatter(date_format)
+    fig.autofmt_xdate()
+    plt.title("Rétrodiffusion acoustique dans la colonne d'eau")
+    plt.xlabel('Temps')
     plt.ylabel('Hauteur (m)')
     plt.colorbar(label= "dB")
 
@@ -450,11 +456,14 @@ if __name__ == '__main__':
     BI_surface = (np.array(BI_surface))
     S_surface = np.array(S_surface)
 
-    
+
+
     tturb_new_fond = log_MES_fond[0:len(BI_fond)]
     tturb_new_surface = log_MES_surface[0:len(BI_surface)]
 
-
+    
+    BI_fond = BI_fond[:len(tturb_new_fond)]
+    print(len(BI_fond),len(tturb_new_fond))
     linear_fond = np.polyfit(BI_fond, tturb_new_fond, 1)
     linear_surface = np.polyfit(BI_surface, tturb_new_surface,1)
 
@@ -467,6 +476,7 @@ if __name__ == '__main__':
 
 
     plt.figure(9)
+    plt.subplot(211)
     plt.scatter(BI_fond, tturb_new_fond, linewidth=0.5)
     plt.plot(BI_fond,A_fond*BI_fond + B_fond ,'r', label='a='+ str(np.round(A_fond, 2)) + '\nb=' + str(np.round(B_fond, 2)))
     plt.title('Corrélation entre BI et turbidité de fond ' + ' R^2 = '+str(np.round(coor_fond, 2)))
@@ -475,7 +485,8 @@ if __name__ == '__main__':
     plt.grid()
     plt.legend()
 
-    plt.figure(10)
+    plt.subplot(212)
+    
     plt.scatter(BI_surface, tturb_new_surface, linewidth=0.5)
     plt.plot(BI_surface,A_surface*BI_surface + B_surface ,'r', label='a='+ str(np.round(A_surface, 2)) + '\nb=' + str(np.round(B_surface, 2)))
     plt.title('Corrélation entre BI et turbidité en surface ' + ' R^2 = '+str(np.round(coor_surface, 3)))
@@ -491,49 +502,101 @@ if __name__ == '__main__':
     plt.title('Temperature according to the time')
     plt.grid()
 
-    plt.figure(12)
-    plt.plot(date_maree_clean, hauteur_maree_clean)
-    plt.xlabel('time')
-    plt.ylabel('Hauteur (m)')
-    plt.title('Tide from Le Havre tide gauge')
+
+
+
+
+
+    # Q7 
+
+    ssc_modified_fond = A_fond*BI_fond + B_fond
+    ssc_modified_surface = A_surface*BI_surface + B_surface
+    print(BI_fond.shape)
+    plt.figure()
+    plt.subplot(211)
+    plt.plot(ssc_modified_fond,label='ssc au fond')
     plt.grid()
-
-
-
-    corr_maree_bottom = regression_lineaire(hauteur_maree_clean[0:len(turb_bottom_clean)], turb_bottom_clean)
-    corr_maree_surface = regression_lineaire(hauteur_maree_clean[0:len(turb_surface_clean)], turb_surface_clean)
-
-    print('corrélation maree/bottom = ', corr_maree_bottom[0])
-    print('corrélation maree/surface = ', corr_maree_surface[0])
-
-#### Question 7 ####
-
-    # print(BI_surface.shape)
-    # print(S_surface.shape)
-    # SS = np.linspace(10, 40, 766)
-    coor_sal_surface, A_sal_surface, B_sal_surface = regression_lineaire(S_surface, BI_surface)
-    coor_sal_fond, A_sal_fond, B_sal_fond = regression_lineaire(S_fond, BI_fond)
-
-
-    print('corrélation salinité de fond / BI = ', coor_sal_fond)
-    print('corrélation salinité de surface / BI = ', coor_sal_surface)
-
-
-    mask_maree_down = date_maree_clean > pd.Timestamp(2018,4,13,0,19,19)
-    mask_maree_up = pd.Timestamp(2018, 4, 28, 23, 49, 19) > date_maree_clean
-    mask_tot_maree = mask_maree_down * mask_maree_up
-
-    date_maree_clean = date_maree_clean[mask_tot_maree]
-    hauteur_maree_clean = (hauteur_maree_clean.reshape(-1,1))[mask_tot_maree]
-
-    plt.figure(13)
-    plt.plot(date_maree_clean, hauteur_maree_clean, label='signal de marée')
-    plt.plot(time_utile, pressure_utile, label='hauteur mesurée')
-    plt.xlabel('time')
-    plt.ylabel('Hauteur (m)')
-    plt.title('Tide from Le Havre tide gauge and mesured height by pressure')
     plt.legend()
+    plt.subplot(212)
+    plt.plot(ssc_modified_surface,label='ssc en surface')
     plt.grid()
+    plt.legend()
+
+    ssc_modified_fond = A_fond*BI + B_fond
+    ssc_modified_surface = A_surface*BI + B_surface
+    # print(ssc_modified_fond.shape)
+
+    fig=plt.figure()
+    ax = fig.add_subplot(121)
+    ax.set_xlabel('Temps')
+    # plt.pcolormesh(BI.T, cmap='rainbow')
+    plt.imshow(ssc_modified_fond.T,origin="lower",extent=[mdates.date2num(pd.Timestamp(2018,12,15)),mdates.date2num(pd.Timestamp(2018,12,30)),0,40],aspect='auto',cmap='rainbow')
+    ax.xaxis_date()
+    date_format = mdates.DateFormatter('%D:%H:%M')
+    ax.xaxis.set_major_formatter(date_format)
+    fig.autofmt_xdate()
+    plt.title("MES dans la colonne d'eau, avec données de fond")
+    plt.xlabel('Temps')
+    plt.ylabel('Hauteur (m)')
+    plt.colorbar(label= "10*logSSC")
+    
+    
+    ax = fig.add_subplot(122)
+    ax.set_xlabel('Temps')
+    # plt.pcolormesh(BI.T, cmap='rainbow')
+    plt.imshow(ssc_modified_surface.T,origin="lower",extent=[mdates.date2num(pd.Timestamp(2018,12,15)),mdates.date2num(pd.Timestamp(2018,12,30)),0,40],aspect='auto',cmap='rainbow')
+    ax.xaxis_date()
+    date_format = mdates.DateFormatter('%D:%H:%M')
+    ax.xaxis.set_major_formatter(date_format)
+    fig.autofmt_xdate()
+    plt.title("MES dans la colonne d'eau, avec données de surface")
+    plt.xlabel('Temps')
+    plt.ylabel('Hauteur (m)')
+    plt.colorbar(label= "10*logSSC")
+
+
+    # plt.figure(12)
+    # plt.plot(date_maree_clean, hauteur_maree_clean)
+    # plt.xlabel('time')
+    # plt.ylabel('Hauteur (m)')
+    # plt.title('Tide from Le Havre tide gauge')
+    # plt.grid()
+
+
+
+#     corr_maree_bottom = regression_lineaire(hauteur_maree_clean[0:len(turb_bottom_clean)], turb_bottom_clean)
+#     corr_maree_surface = regression_lineaire(hauteur_maree_clean[0:len(turb_surface_clean)], turb_surface_clean)
+
+#     print('corrélation maree/bottom = ', corr_maree_bottom[0])
+#     print('corrélation maree/surface = ', corr_maree_surface[0])
+
+# #### Question 7 ####
+
+    # # print(BI_surface.shape)
+    # # print(S_surface.shape)
+    # # SS = np.linspace(10, 40, 766)
+    # coor_sal_surface, A_sal_surface, B_sal_surface = regression_lineaire(S_surface, BI_surface)
+    # coor_sal_fond, A_sal_fond, B_sal_fond = regression_lineaire(S_fond, BI_fond)
+
+
+    # print('corrélation salinité de fond / BI = ', coor_sal_fond)
+    # print('corrélation salinité de surface / BI = ', coor_sal_surface)
+
+
+    # mask_maree_down = date_maree_clean > pd.Timestamp(2018,4,13,0,19,19)
+    # mask_maree_up = pd.Timestamp(2018, 4, 28, 23, 49, 19) > date_maree_clean
+    # mask_tot_maree = mask_maree_down * mask_maree_up
+
+    # date_maree_clean = date_maree_clean[mask_tot_maree]
+    # hauteur_maree_clean = (hauteur_maree_clean.reshape(-1,1))[mask_tot_maree]
+
+    # plt.figure(13)
+    # plt.plot(date_maree_clean, hauteur_maree_clean, label='signal de marée')
+    # plt.plot(time_utile, pressure_utile, label='hauteur mesurée')
+    # plt.xlabel('time')
+    # plt.ylabel('Hauteur (m)')
+    # plt.title('Tide from Le Havre tide gauge and mesured height by pressure')
+    # plt.legend()
+    # plt.grid()
 
     plt.show()
-

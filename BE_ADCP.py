@@ -140,7 +140,7 @@ for i in range(len(awac_data['date_masked'][mask_tps_data[0]:mask_tps_data[-1]+1
 fig = plt.figure()
 ax = fig.add_subplot(211)
 ax.set_xlabel('Temps')
-plt.imshow(ve.T,origin="lower",extent=[mdates.date2num(pd.Timestamp(2018,12,15)),mdates.date2num(pd.Timestamp(2018,12,30)),0,40],aspect='auto',cmap='RdBu')
+plt.imshow(ve.T,origin="lower",extent=[mdates.date2num(pd.Timestamp(2018,12,15)),mdates.date2num(pd.Timestamp(2018,12,30)),0,40],aspect='auto',cmap='rainbow')
 plt.colorbar()
 ax.xaxis_date()
 date_format = mdates.DateFormatter('%D:%H:%M')
@@ -150,7 +150,7 @@ plt.title('Vitesse EST')
 
 ax = fig.add_subplot(212)
 ax.set_xlabel('Temps')
-plt.imshow(vn.T,origin="lower",extent=[mdates.date2num(pd.Timestamp(2018,12,15)),mdates.date2num(pd.Timestamp(2018,12,30)),0,40],aspect='auto',cmap='RdBu')
+plt.imshow(vn.T,origin="lower",extent=[mdates.date2num(pd.Timestamp(2018,12,15)),mdates.date2num(pd.Timestamp(2018,12,30)),0,40],aspect='auto',cmap='rainbow')
 plt.colorbar()
 ax.xaxis_date()
 date_format = mdates.DateFormatter('%D:%H:%M')
@@ -354,7 +354,7 @@ psi = round(np.mean(psi))
 AW = np.array(alpha_w)
 plt.figure()
 plt.imshow(AW)
-plt.show()
+
 ranges_aw=np.ones((AW.shape))
 ranges_aw=ranges_aw*0.5
 ranges_aw[:,0]=R0
@@ -371,7 +371,98 @@ PGeo = 10 * np.log10(V)
 BI = np.ones((TL.shape))
 BI = RL - SL + 2*TL - PGeo
 
-print(BI)
+print(BI.shape)
+
+plt.figure(8)
+plt.pcolormesh(BI.T, cmap='jet')
+plt.title("Rétrodiffusion acoustique corrigée des atténuations dans la colonne d'eau")
+plt.xlabel('Date')
+plt.ylabel('Hauteur (m)')
+plt.colorbar(label= "dB")
+
+
+
+
+
+
+plt.show()
+
+# Q4 temp
+
+
+# Emitted signal SL #
+SL = 196 # [dB]
+# Received Level RL #
+Kc = 0.42
+ECO = 45
+B = 70
+EC = a1_utile # a1, a2 ou a3
+RL = Kc*(EC-ECO)+B # equation du sonar
+
+# Transmission Loss TL #
+# f = 1000  [kHz]
+
+S = np.ones((RL.shape))
+# for i in range(0, S.shape[0]): # Construction matrice de salinité de toute la colonne d'eau
+#     S[i,21:39] = 15
+#     S[i,0] = 32
+
+var_sali = np.linspace(10, 35, 40)
+
+for i in range(0, S.shape[0]):  # Construction matrice de salinité variable de toute la colonne d'eau
+    S[i,:] = var_sali
+
+# S = S * 25 # Salinité constante sur toute la colonne d'eau
+
+
+T = np.ones((RL.shape))
+P = np.ones((RL.shape))
+f = np.ones((RL.shape))
+f = f*1000
+AW = np.ones((RL.shape))
+
+
+for i in range(0, 40):
+    T[:,i] = T[:,i] * temperature_utile
+    P[:,i] = P[:,i] * pressure_utile
+
+
+AW = att_son_eau_Garrison(f, P, T, S)
+print(AW.shape)
+
+#### Parametres geometriques ADCP ####
+WS = 0.50  # cell size
+alpha = 25 # Beam angle/vertical [rad]
+ouv = 0.99  # ouverture angulaire du faisceau [rad]
+phi = ouv * np.pi/180 # ouverture angulaire du faisceau [rad]
+PSI = np.pi * (phi/2)**2 # Solid Angle
+R =  cell.T / np.cos(alpha)
+V = PSI * R**2 * 0.5 * WS # Volume
+R0 = 1.08
+z = R/R0
+psi = ( 1 + 1.35 * z + (( 2.5 * z )**3.2)) / ( 1.35 * z + ((2.5 * z)**3.2))
+psi = round(np.mean(psi))
+
+#### Resolution equation sonar ####
+
+TL = np.ones((AW.shape))
+TL = 10*np.log10(R**2) + AW
+
+
+PGeo = 10 * np.log10(V)
+BI = np.ones((TL.shape))
+BI = RL - SL + 2*TL - PGeo
+
+
+plt.figure(8)
+plt.pcolormesh(BI.T, cmap='jet')
+plt.title("Rétrodiffusion acoustique dans la colonne d'eau")
+plt.xlabel('Temps')
+plt.ylabel('Hauteur (m)')
+plt.colorbar(label= "dB")
+
+
+
 
 
 # #Tableau des alpha en fonction des temps de Temperature aux bonnes dates
